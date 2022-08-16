@@ -21,9 +21,7 @@ check_args_set(){
 main() {
 	#get args from client
 	set -a
-	#delete me!
 	source config.sh
-	#delete me!
 	eval "$@"
 	INTERMEDIATE_MACHINE=$(hostname)
 	set +a
@@ -34,14 +32,10 @@ main() {
 	. ./environment_setup.sh
 
 	#start server
-	#python "server.py -p ${INTERMEDIATE_ARB_PORT} -h ${INTERMEDIATE_HOST} -d true" &
+	python ./mediator_server/server.py
 
 	#submit the job
-	./submit.sh --cluster andes --interactive -A csc143 -N 1 -t 00:10:00 ./reverse_ssh.sh "$@"
-
-	#await connection
-	#./connect_ssh.sh "$@"
-
+	#./submit.sh --cluster andes --interactive -A ${ACCOUNT} -N ${NODES} -t ${TIME} ./reverse_ssh.sh "$@"
 }
 
-main $@
+main "$@"
