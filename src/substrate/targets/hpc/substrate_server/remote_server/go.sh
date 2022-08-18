@@ -5,5 +5,5 @@ set -a
 eval "$@"
 set +a
 
-pipenv run python __main__.py --server remote
+pipenv run python ../__main__.py --server remote
 
