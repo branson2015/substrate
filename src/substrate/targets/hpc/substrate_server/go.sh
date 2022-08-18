@@ -41,8 +41,8 @@ main() {
     # testing - delete me
     ssh -4 -t \
         -L ${INTERMEDIATE_REM_PORT}:${REMOTE_HOST}:${REMOTE_ARB_PORT} "${REMOTE_USER}@${REMOTE_MACHINE}" "
-            cd ${REMOTE_SUBSTRATE_DIR}
-            ./app.sh '$@'
+            cd ${REMOTE_SUBSTRATE_DIR}/remote_server
+            ./go.sh '$@'
     "
 }
 
