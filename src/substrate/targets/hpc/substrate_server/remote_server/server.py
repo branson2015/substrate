@@ -39,7 +39,7 @@ def commands(server):
 def routes(server):
     @server.app.route('/terminal')
     def terminal():
-        return render_template('terminal.html')
+        return render_template('terminal.html', data={'pty': '/pty2'})
 
 class Server:
     def __init__(self):
@@ -84,6 +84,7 @@ def main():
     server = Server()
     server.add(socketio_pty, '/pty2')
     server.add(commands)
+    server.add(routes)
     server.run(host=host, port=int(port), debug=True if debug == 'True' else False)
 
 if __name__ == "__main__":

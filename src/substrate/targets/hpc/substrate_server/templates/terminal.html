@@ -73,7 +73,10 @@ class Substrate_Terminal {
 };
 
 (function main(){
-    const terminal = new Substrate_Terminal('/pty1', document.getElementById('terminal'));
+    const data = {{data}}; //jinja2
+    console.log(data);
+
+    const terminal = new Substrate_Terminal(data.pty, document.getElementById('terminal'));
 })();
 
 </script>

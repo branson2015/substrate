@@ -82,7 +82,7 @@ def routes(server):
 
     @server.app.route('/terminal')
     def terminal():
-        return render_template('terminal.html')
+        return render_template('terminal.html', data={'pty': '/pty2'})
 
     @server.app.route('/command', methods=['GET'])
     def server_command():
