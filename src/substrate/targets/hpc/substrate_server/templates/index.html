@@ -20,7 +20,7 @@
                 width: 20%;
                 height: 200px;
             }
-            #application_iframe, #application {
+            iframe, #application {
                 width: 100%;
                 height: 100%;
                 border: none;
@@ -29,7 +29,6 @@
             }
         </style>
         <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
-        <link rel="stylesheet" href="https://unpkg.com/xterm@4.11.0/css/xterm.css" />
     </head>
 
     <body>
@@ -40,19 +39,14 @@
             <button>Restart Service</button>
             <button onclick="kill_server()">Shutdown</button>
             <p>Cluster Status: <span id="clusterStatus">Offline</span></p>
-            <div id="terminal_login"></div>
-            <div id="terminal_cluster"></div>
+
+            <iframe src="http://127.0.0.1:5001/terminal"></iframe>
+            <!--<iframe src="http://127.0.0.1:8031/terminal"></iframe>!-->
         </div>
         <div id="application">
             <iframe id="application_iframe" src="./cluster_down"></iframe>
         </div>
     </body>
-    
-    <!-- xterm -->
-    <script src="https://unpkg.com/xterm@4.11.0/lib/xterm.js"></script>
-    <script src="https://unpkg.com/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
-    <script src="https://unpkg.com/xterm-addon-web-links@0.4.0/lib/xterm-addon-web-links.js"></script>
-    <script src="https://unpkg.com/xterm-addon-search@0.8.0/lib/xterm-addon-search.js"></script>
     
     <!-- socketio -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
@@ -74,54 +68,11 @@
         6. style CSS better - debug/cluster_down page
         7. integrate into substrate
     */
-
-
-
     
     const socket = io('/');
     const clusterStatusElement = document.getElementById('clusterStatus');
-    let clusterConnected = false;
 
 
-    class Substrate_Terminal {
-        constructor(namespace, element){
-            this.element = element;
-            this.socket = io(namespace);
-            this.terminal = new Terminal({
-                cursorBlink: true,
-                macOptionIsMeta: true,
-                scrollback: true,
-                allowTransparency: true,
-                theme: {
-                    background: 'rgba(0,0,0,0.25)'
-                }
-            });
-            // https://github.com/xtermjs/xterm.js/issues/2941
-            this.fit = new FitAddon.FitAddon();
-            this.terminal.loadAddon(this.fit);
-            this.terminal.loadAddon(new WebLinksAddon.WebLinksAddon());
-            this.terminal.loadAddon(new SearchAddon.SearchAddon());
-
-            this.terminal.open(element);
-            this.fit.fit();
-            
-            this.socket.on('connect', () => {
-                this.fitToscreen.bind(this);
-                this.socket.emit("pty-input", { input: '\r' });
-            });  
-            this.terminal.onData(data => { this.socket.emit("pty-input", { input: data }); });
-            this.socket.on("pty-output", data => { this.terminal.write(data.output); });    
-
-            addEventListener('resize', debounce(this.fitToscreen.bind(this), 50));
-             
-        }
-        
-        fitToscreen() {
-            this.fit.fit();
-            const dims = { cols: this.terminal.cols, rows: this.terminal.rows };
-            this.socket.emit("resize", dims);
-        }
-    }
 
     function query_get(query){
         const url = new URL(`${window.location}command`);
@@ -144,14 +95,6 @@
             console.log(data);
         });
     }
-        
-    function debounce(func, wait_ms) {
-        let timeout;
-        return function (...args) {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => func(args), wait_ms);
-        };
-    }
 
     function init_app(port){
         const iframe = document.getElementById('application_iframe')
@@ -164,35 +107,21 @@
     }
 
     (function main(){
-        const terminals = {
-            login: new Substrate_Terminal('/pty1', document.getElementById('terminal_login')),
-            cluster: null,
-        };
 
         //arbitration server
         socket.on('connect', () => {
             clusterStatusElement.innerHTML = "connecting..."
         });  
-        socket.on('disconnect', () => {})
+        socket.on('disconnect', () => {});
 
+
+        /* 
         //cluster status
-        socket.on('cluster_estimate', (data) => {
-            clusterStatusElement.innerHTML = `connecting... Estimated wait time: ${data.output}`
-        });
-
+        socket.on('cluster_estimate', (data) => { clusterStatusElement.innerHTML = `connecting... Estimated wait time: ${data.output}`});
         //cluster events
-        socket.on('cluster_connected', (data) => {
-            terminals.cluster = new Substrate_Terminal('/pty2', document.getElementById('terminal_cluster'))
-            clusterStatusElement.innerHTML = 'connected'
-            clusterConnected = true;
-            init_app(data.port);
-        });
-        socket.on('cluster_disconnected', (data) => {
-            terminals.clsuter = null;
-            clusterStatusElement.innerHTML = 'disconnected'
-            clusterConnected = false;
-            destroy_app();
-        })
+        socket.on('cluster_connected', (data) => {});
+        socket.on('cluster_disconnected', (data) => {});
+        */
     })();
 
     </script>

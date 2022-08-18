@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 import logging
 import sys
@@ -36,13 +36,18 @@ def commands(server):
     def scale():
         pass
 
+def routes(server):
+    @server.app.route('/terminal')
+    def terminal():
+        return render_template('terminal.html')
+
 class Server:
     def __init__(self):
-        self.app = Flask(__name__)
+        template_dir = os.path.abspath('../templates')
+        self.app = Flask(__name__, template_folder=template_dir)
         self.app.config['SECRET_KEY'] = 'secret'
         self.socketio = SocketIO()
         self.socketio.init_app(self.app)
-        self.cluster_connected = False
         self.substrate_pid = None
     
     def run(self, *args, **kwargs):

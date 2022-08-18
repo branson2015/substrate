@@ -7,7 +7,7 @@ import subprocess
 import requests
 import os
 
-from ..utils import *
+from utils import *
 
 #logging.getLogger("werkzeug").setLevel(logging.ERROR)
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -80,6 +80,10 @@ def routes(server):
     def root():
         return render_template('index.html')
 
+    @server.app.route('/terminal')
+    def terminal():
+        return render_template('terminal.html')
+
     @server.app.route('/command', methods=['GET'])
     def server_command():
         args = request.args
@@ -110,7 +114,8 @@ def routes(server):
 
 class Server:
     def __init__(self):
-        self.app = Flask(__name__)
+        template_dir = os.path.abspath('../templates')
+        self.app = Flask(__name__, template_folder=template_dir)
         self.app.config['SECRET_KEY'] = 'secret'
         self.socketio = SocketIO()
         self.socketio.init_app(self.app)

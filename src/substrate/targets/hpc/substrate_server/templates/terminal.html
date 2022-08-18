@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<head>
+    <title>Terminal</title>
+    <link rel="stylesheet" href="https://unpkg.com/xterm@4.11.0/css/xterm.css" />
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
+</head>
+<body>
+    <div id="terminal"></div>
+</body>
+<!-- xterm -->
+<script src="https://unpkg.com/xterm@4.11.0/lib/xterm.js"></script>
+<script src="https://unpkg.com/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
+<script src="https://unpkg.com/xterm-addon-web-links@0.4.0/lib/xterm-addon-web-links.js"></script>
+<script src="https://unpkg.com/xterm-addon-search@0.8.0/lib/xterm-addon-search.js"></script>
+
+<!-- socketio -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+
+<!-- user script -->
+<script type="text/javascript" charset="utf-8">
+
+
+const socket = io('/');
+const clusterStatusElement = document.getElementById('clusterStatus');
+let clusterConnected = false;
+
+function debounce(func, wait_ms) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(args), wait_ms);
+    };
+}
+
+class Substrate_Terminal {
+    constructor(namespace, element){
+        this.element = element;
+        this.socket = io(namespace);
+        this.terminal = new Terminal({
+            cursorBlink: true,
+            macOptionIsMeta: true,
+            scrollback: true,
+            allowTransparency: true,
+            theme: {
+                background: 'rgba(0,0,0,0.25)'
+            }
+        });
+        // https://github.com/xtermjs/xterm.js/issues/2941
+        this.fit = new FitAddon.FitAddon();
+        this.terminal.loadAddon(this.fit);
+        this.terminal.loadAddon(new WebLinksAddon.WebLinksAddon());
+        this.terminal.loadAddon(new SearchAddon.SearchAddon());
+
+        this.terminal.open(element);
+        this.fit.fit();
+        
+        this.socket.on('connect', () => {
+            this.fitToscreen.bind(this);
+            this.socket.emit("pty-input", { input: '\r' });
+        });  
+        this.terminal.onData(data => { this.socket.emit("pty-input", { input: data }); });
+        this.socket.on("pty-output", data => { this.terminal.write(data.output); });    
+
+        addEventListener('resize', debounce(this.fitToscreen.bind(this), 50));
+         
+    }
+    
+    fitToscreen() {
+        this.fit.fit();
+        const dims = { cols: this.terminal.cols, rows: this.terminal.rows };
+        this.socket.emit("resize", dims);
+    }
+};
+
+(function main(){
+    const terminal = new Substrate_Terminal('/pty1', document.getElementById('terminal'));
+})();
+
+</script>
+
+</html>

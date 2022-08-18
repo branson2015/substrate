@@ -32,10 +32,18 @@ main() {
 	. ./environment_setup.sh
 
 	#start server
-	python ./mediator_server/server.py
+	#python ./mediator_server/server.py
+    python __main__.py &
 
 	#submit the job
 	#./submit.sh --cluster andes --interactive -A ${ACCOUNT} -N ${NODES} -t ${TIME} ./reverse_ssh.sh "$@"
+
+    # testing - delete me
+    ssh -4 -t \
+        -L ${INTERMEDIATE_REM_PORT}:${REMOTE_HOST}:${REMOTE_ARB_PORT} "${REMOTE_USER}@${REMOTE_MACHINE}" "
+            cd ${REMOTE_SUBSTRATE_DIR}
+            ./app.sh '$@'
+    "
 }
 
 main "$@"
