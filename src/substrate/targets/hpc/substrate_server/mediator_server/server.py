@@ -80,10 +80,6 @@ def routes(server):
     def root():
         return render_template('index.html')
 
-    @server.app.route('/terminal')
-    def terminal():
-        return render_template('terminal.html', data={'pty': '/pty2'})
-
     @server.app.route('/command', methods=['GET'])
     def server_command():
         args = request.args
@@ -114,7 +110,7 @@ def routes(server):
 
 class Server:
     def __init__(self):
-        template_dir = os.path.abspath('../templates')
+        template_dir = os.path.abspath('./templates')
         self.app = Flask(__name__, template_folder=template_dir)
         self.app.config['SECRET_KEY'] = 'secret'
         self.socketio = SocketIO()
@@ -132,16 +128,12 @@ class Server:
             return
         self.cluster_connected = True
         self.socketio.emit('cluster_connected', None, broadcast=True)
-        # set up pty2 routes
-        # server.add(socketio_pty, '/pty1')
     
     def set_cluster_disconnected(self):
         if self.cluster_connected == False:
             return
         self.cluster_connected = False
         self.socketio.emit('cluster_disconnected', None, broadcast=True)
-        # destroy pty2 routes
-        # server.remove(socketio_pty, '/pty1')
 
     def add(self, callback, *args, **kwargs):
         callback(self, *args, **kwargs)

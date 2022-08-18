@@ -5,6 +5,7 @@ import fcntl
 import struct
 import termios
 import select
+from flask import render_template
 
 def set_winsize(fd, row, col, xpix=0, ypix=0):
     winsize = struct.pack("HHHH", row, col, xpix, ypix)
@@ -24,6 +25,10 @@ def read_and_forward_pty_output(server, ns):
 def socketio_pty(server, ns):
     server.app.config[f'{ns}_child_pid'] = None
     server.app.config[f'{ns}_fd'] = None
+
+    @server.app.route('/terminal')
+    def terminal():
+        return render_template('terminal.html', data={'pty': ns})
 
     @server.socketio.on('connect', namespace=ns)
     def handle_pty_connect(message):   

@@ -36,11 +36,6 @@ def commands(server):
     def scale():
         pass
 
-def routes(server):
-    @server.app.route('/terminal')
-    def terminal():
-        return render_template('terminal.html', data={'pty': '/pty2'})
-
 class Server:
     def __init__(self):
         template_dir = os.path.abspath('../templates')

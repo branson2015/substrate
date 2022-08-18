@@ -3,9 +3,20 @@
     <title>Terminal</title>
     <link rel="stylesheet" href="https://unpkg.com/xterm@4.11.0/css/xterm.css" />
     <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
+    <style>
+        .active {
+            display: block;
+        }
+        .inactive {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <div id="terminal"></div>
+    <div id="terminal" class="inactive"></div>
+    <div id="disconnected" class="active">
+        Terminal Disconnected.
+    </div>
 </body>
 <!-- xterm -->
 <script src="https://unpkg.com/xterm@4.11.0/lib/xterm.js"></script>
@@ -19,11 +30,6 @@
 <!-- user script -->
 <script type="text/javascript" charset="utf-8">
 
-
-const socket = io('/');
-const clusterStatusElement = document.getElementById('clusterStatus');
-let clusterConnected = false;
-
 function debounce(func, wait_ms) {
     let timeout;
     return function (...args) {
@@ -33,9 +39,9 @@ function debounce(func, wait_ms) {
 }
 
 class Substrate_Terminal {
-    constructor(namespace, element){
+    constructor(namespace, element, socketio){
         this.element = element;
-        this.socket = io(namespace);
+        this.socket = socketio || io(namespace);
         this.terminal = new Terminal({
             cursorBlink: true,
             macOptionIsMeta: true,
@@ -52,31 +58,64 @@ class Substrate_Terminal {
         this.terminal.loadAddon(new SearchAddon.SearchAddon());
 
         this.terminal.open(element);
-        this.fit.fit();
+        this.fitToScreen();
         
         this.socket.on('connect', () => {
-            this.fitToscreen.bind(this);
             this.socket.emit("pty-input", { input: '\r' });
+            this.fitToScreen.bind(this);
         });  
         this.terminal.onData(data => { this.socket.emit("pty-input", { input: data }); });
         this.socket.on("pty-output", data => { this.terminal.write(data.output); });    
 
-        addEventListener('resize', debounce(this.fitToscreen.bind(this), 50));
-         
+        addEventListener('resize', debounce(this.fitToScreen.bind(this), 50));
     }
     
-    fitToscreen() {
+    fitToScreen() {
         this.fit.fit();
         const dims = { cols: this.terminal.cols, rows: this.terminal.rows };
         this.socket.emit("resize", dims);
     }
+
+    kill() {
+        this.terminal.dispose();
+        return null;
+    }
 };
 
 (function main(){
-    const data = {{data}}; //jinja2
-    console.log(data);
+    const pty = "{{data.pty}}"; //jinja2
+    const socket = io(pty);
 
-    const terminal = new Substrate_Terminal(data.pty, document.getElementById('terminal'));
+    const disconnected_element = document.getElementById('disconnected');
+    const terminal_element = document.getElementById('terminal');
+
+    let terminal = null;
+
+    socket.on('connect', () => {
+        disconnected_element.classList.remove('active');
+        disconnected_element.classList.add('inactive');
+        terminal_element.classList.remove('inactive');
+        terminal_element.classList.add('active');
+
+        if(terminal == null){
+            terminal = new Substrate_Terminal(pty, terminal_element, socket);
+            terminal.fitToScreen();
+        }
+    });  
+
+    socket.on('disconnect', () => {
+        disconnected_element.classList.remove('inactive');
+        disconnected_element.classList.add('active');
+        terminal_element.classList.remove('active');
+        terminal_element.classList.add('inactive');
+
+        if(terminal){
+            terminal = terminal.kill();
+        }
+    });
+
+
+    
 })();
 
 </script>

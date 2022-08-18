@@ -33,7 +33,7 @@ main() {
 
 	#start server
 	#python ./mediator_server/server.py
-    python __main__.py &
+    python __main__.py --server intermediate &
 
 	#submit the job
 	#./submit.sh --cluster andes --interactive -A ${ACCOUNT} -N ${NODES} -t ${TIME} ./reverse_ssh.sh "$@"
