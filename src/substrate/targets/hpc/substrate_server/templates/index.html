@@ -2,6 +2,10 @@
     <head>
         <title>Substrate HPC</title>
         <style>
+            :root {
+                --gradient_1: linear-gradient(rgb(194, 255, 169), rgb(87, 255, 65));
+            }
+
             * {
                 box-sizing: border-box;
                 -moz-box-sizing: border-box;
@@ -13,13 +17,6 @@
                 height: 100%;
                 width: 100%;
             }
-            #debug {
-                position: fixed;
-                top: 0px;
-                right: 0px;
-                width: 20%;
-                height: 200px;
-            }
             iframe, #application {
                 display: block;
                 width: 100%;
@@ -28,24 +25,314 @@
                 padding: 0px;
                 margin: 0px;
             }
+
+            #startup {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+            #new_allocation, #new_allocation:after {
+                position: relative;
+                background: var(--gradient_1);
+                width: 200px;
+                height: 75px;
+                border-radius: 25px;
+                border: none;
+                font-size: 1.5em;
+                color: white;
+                box-shadow: 5px 5px 7px rgba(0, 0, 0, 0.5);
+                transition: all 0.5s;
+                -webkit-transition: all 0.5s;
+                -moz-transition: all 0.5s;
+            }
+            #new_allocation:active, #new_allocation:active:after {
+                width: 190px;
+                height: 65px;
+                border-radius: 20px;
+                transition: all 0.0s;
+                -webkit-transition: all 0.0s;
+                -moz-transition: all 0.0s;
+                box-shadow: none;
+                top: 5px;
+                left: 5px;
+            }
+            #new_allocation:after {
+                position: absolute;
+                top: 0;
+                left: 0;
+                content: '\A';
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                background:rgba(0,0,0,0.2);
+                opacity: 0;
+            }
+            #new_allocation:hover:after {
+                opacity: 1;
+            }
+            #new_allocation:active:after {
+                top: 0px;
+                left: 0px;
+                opacity: 0;
+            }
+
+            #overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+            }
+
+            #sidebar {
+                position: relative;
+                float: right;
+                width: 300px;
+                height: 100%;
+            }
+
+            #login_terminal, #cluster_terminal {
+                height: 100%;
+                display: none;
+            }
+            
+            #status {
+                width: 100%;
+                height: 75px;
+                background: rgba(0,0,0,0.25);
+                pointer-events: all;
+            }
+            #status_page {
+                height: 25%;
+                width: 100%;
+                text-align: center;
+                display: flex;
+                flex-flow: row nowrap;
+                justify-content: space-between;
+                align-items: center;
+            }
+            #pages {
+                width: 50px;
+                display: flex;
+                flex-flow: row nowrap;
+                justify-content: space-between;
+            }
+            #pages * {
+                width: 10px;
+                margin: 0 auto;
+            }
+            #status_header {
+                height: 25%;
+                width: 100%;
+                border: 1px solid black;
+                border-bottom: none;
+                text-align: center;
+            }
+            #status_header > *:before {
+                content:"";
+                display: inline-block;
+                height: 100%;
+                vertical-align: middle;
+            }
+            #status_header > * {
+                text-align: center;
+                height: 100%;
+            }
+            #change_status_left, #change_status_right {
+                width: 20px;
+                cursor: pointer;
+            }
+            #change_status_left {
+                border-right: 1px solid black;
+            }
+            #change_status_right{
+                border-left: 1px solid black;
+            }
+            #change_status_left:hover, #change_status_right:hover {
+                background: rgba(0,0,0,0.1);
+            }
+            .status-type {
+                height: 50%;
+            }
+
+            .info:before {
+                content:"";
+                display: inline-block;
+                height: 100%;
+                vertical-align: middle;
+            }
+            .info {
+                height: 50%;
+                width: 100%;
+                text-align: center;
+                border: 1px solid black;
+                border-bottom: none;
+            } 
+
+            
+            .options {
+                width: 100%;
+                height: 50%;
+                margin: 0 auto;
+                display: flex;
+                flex-flow: row nowrap;
+                justify-content: space-between;
+            }
+            
+            /*for line-height 100%*/
+            .options div:before{
+                content:"";
+                display: inline-block;
+                height: 100%;
+                vertical-align: middle;
+            }
+            .options div {
+                width: 50%;
+                margin: 0 auto;
+                text-align: center;
+                border: 1px solid black;
+                cursor: pointer;
+            }
+            .options div:hover {
+                background: rgba(0,0,0,0.1);
+            }
+
+
+
+
+            #allocation_options_modal {
+                display: grid;
+            }
+            #allocation_options_modal {
+                padding: 20px;
+                width: 600px;
+                height: 400px;
+                background-color: grey;
+                border-radius: 25px;
+            }
+            #allocation_options_modal form{
+                width: 100%;
+                height: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto;
+            }
+            #allocation_options_modal form hr{
+                border: none;
+                height: 40px;
+            }
+
+            
         </style>
         <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
     </head>
 
-    <body>
-        <div id="debug">
-            <button onclick="salloc()">New Cluster</button>
-            <button>Kill Cluster</button>
-            <button>Scale Cluster</button>
-            <button>Restart Service</button>
-            <button onclick="kill_server()">Shutdown</button>
-            <p>Cluster Status: <span id="clusterStatus">Offline</span></p>
+    <body style="display: none">
+        <div id="startup">
+            <button id="new_allocation" onclick="new_cluster_options()">
+                New Cluster
+            </button>
+            <div id="allocation_options_modal">
+                <form onsubmit="return new_allocation(event)">
+                    <label for="account">Account: </label>
+                    <input type="text" id="account" name="account" placeholder="abc123">
 
-            <iframe src="http://127.0.0.1:5001/terminal"></iframe>
-            <iframe src="http://127.0.0.1:5002/terminal"></iframe>
+                    <label for="GPU">GPU: </label>
+                    <input type="checkbox" id="GPU" name="GPU">
+
+                    <label for="time">Time: </label>
+                    <input type="time" id="time" name="time">
+
+                    <label for="nodes">Nodes: </label>
+                    <input type="number" id="nodes" name="nodes">
+
+                    <hr><hr>
+
+                    <label for="local_port">Local Port: </label>
+                    <input type="number" id="local_port" name="local_port" value="5000">
+
+                    <label for="remote_port">Remote Port: </label>
+                    <input type="number" id="remote_port" name="remote_port" value="8030">
+
+                    <label for="remote_host">Remote Host: </label>
+                    <input type="text" id="remote_port" name="remote_port" value="127.0.0.1">
+
+                    <label for="remote_command">Remote Command: </label>
+                    <input type="text" id="remote_command" name="remote_command" value="./app.sh">
+                    
+                    <hr>
+                    <input type="submit" name="submit" value="OK">
+
+                </form>
+            </div>
+
+
+        </div>
+        <div id="overlay">
+            <div id="sidebar">
+
+                <div id="status">
+                    <div id="status_page">
+                        <div id="change_status_left" onclick="cycle_status_left()"><</div>
+                        <div id="pages">
+                            <div class=".var_login_node_status">o</div>
+                            <div class=".var_cluster_status">o</div>
+                            <div class=".var_running_status">o</div>
+                        </div>
+                        <div id="change_status_right" onclick="cycle_status_right()">></div>
+                    </div>
+                    <div id="status_header">
+                        <span id="status_name"></span>
+                    </div>
+                    
+                    <div class="status-type" id="login_node_status">
+                        <div class="info">
+                            <span>Status</span>: <span class="var">Disconnected</span>
+                        </div>
+                        <div class="options">
+                            <div onclick="cancel_terminal('login')">Cancel</div>
+                            <div onclick="toggle_terminal('login')">Details</div>
+                        </div>
+                    </div>
+
+                    <div class="status-type" id="cluster_status">
+                        <div class="info">
+                            <span>Status</span>: <span class="var">Disconnected</span>
+                        </div>
+                        <div class="options">
+                            <div onclick="cancel_terminal('cluster')">Cancel</div>
+                            <div onclick="toggle_terminal('cluster')">Details</div>
+                        </div>
+                    </div>
+
+                    <div class="status-type" id="running_status">
+                        <div class="info">
+                            <span>Status</span>: <span class="var">Disconnected</span>
+                        </div>
+                        <div class="options">
+                            <button onclick="scale()" id="scale">Scale</button>
+                            <button onclick="restart()" id="restart">Restart</button>
+                            <button onclick="kill()" id="kill">ShutDown</button>
+                        </div>
+                        <div>Details</div>
+                    </div>
+                </div>
+                
+                
+                <div id="login_terminal">
+                    <iframe src="http://127.0.0.1:5001/terminal"></iframe>
+                </div>
+                <div id="cluster_terminal">
+                    <iframe src="http://127.0.0.1:5002/terminal"></iframe>
+                </div>
+            
+            </div>
         </div>
         <div id="application">
-            <iframe id="application_iframe" src="./cluster_down"></iframe>
+            <!--<iframe id="application_iframe" src="./cluster_down"></iframe>-->
         </div>
     </body>
     
@@ -57,11 +344,6 @@
 
     /*
         TODO:
-        1. get terminal working within cluster
-            - ✓ remote server
-            - ✓ needs remote server to create new pty
-            - X create ssh tunnel from remote to local
-            - ✓ remote server will be primary service with substrate tool forked off, this way you can restart the process from within the node
         2. shutdown button
         3. new cluster button
         4. restart server on cluster button
@@ -70,10 +352,75 @@
         7. integrate into substrate
     */
     
-    const socket = io('/');
-    const clusterStatusElement = document.getElementById('clusterStatus');
+    function new_cluster(){
+        document.getElementById('new_allocation').style.display = 'block';
+        document.getElementById('allocation_options_modal').style.display = 'none';
+        document.getElementById('startup').style.display = 'block';
+    }
+    function new_cluster_options(){
+        const button = document.getElementById('new_allocation');
+        button.style.display = 'none';
+        const modal = document.getElementById('allocation_options_modal');
+        modal.style.display = 'block';
+    }
+    
+    function validate(formData){
+        let ret = true;
+        const errs = Object.fromEntries(Object.entries(formData).map(([key, value]) => {
+            let err = null;
+            switch(key){
+                case 'account': 
+                    if(value.length <= 0) err = 'length'
+                    break;
+                case 'time':
+                    if(!/^\d+:[0-9][0-9]$/.test(key)) err = 'incorrect time format'
+                    break;
+                case 'nodes': 
+                    if(!(0 < parseInt(value) && parseInt(value) <= 32)) err = 'incorrect format';
+                    break;
+                case 'local_port':
+                case 'remote_port':
+                    if(0 < parseInt(value)) err = 'incorrect format'; 
+                    break;
+                default:
+                    err = null;
+            }
+            if(err != null) ret = false;
+            return [key, err];
+        }));
+        return [ret, errs]
+    }
+    function new_allocation(e){
+        e.preventDefault();
+        const formData = Object.fromEntries(Array.from(e.target.elements).map(el => [el.name, el.value]))
+        let [valid, errs] = validate(formData);
+        //delete me
+        valid = true;
+        if(!valid) {
+            console.log(errs)
+            return false;
+        }
+        //fetch('/new_cluster', formData);
+        const modal = document.getElementById('allocation_options_modal');
+        const startup = document.getElementById('startup');
+        startup.style.display = modal.style.display = 'none';
+        
+        set_status_avail('running_status', false);
+        set_status_avail('login_node_status', true);
+        set_status_avail('cluster_status', true);
+        const status_el = set_status_mode('cluster_status');
+        const span = status_el.querySelector('.var');
+        span.innerHTML = 'Connecting...'
+
+        
 
 
+        return false;
+    }
+
+    
+    const socket_login =   io('127.0.0.1:5001/');
+    const socket_cluster = io('127.0.0.1:5002/');
 
     function query_get(query){
         const url = new URL(`${window.location}command`);
@@ -107,22 +454,233 @@
         iframe.src = 'cluster_down.html'
     }
 
+    function cancel_terminal(terminal){
+        const map = {
+            'login': cancel_login_terminal,
+            'cluster': cancel_cluster_terminal,
+        };
+        map[terminal]();
+    }
+
+
+
+    function cycle_status_left(){
+        const prev = get_prev_status();
+        if(prev){
+            set_status_mode(prev);
+        }
+    }
+    function cycle_status_right(){
+        const next = get_next_status();
+        if(next){
+            set_status_mode(next);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    function changeStatusText(status, text){
+        const status_el = document.getElementById('status')
+        const span = status_el.querySelector('.var');
+        span.innerHTML = text;
+    }
+
+    function cancel_cluster_terminal(){
+        const mode = get_status_mode();
+        if(mode.id != 'cluster_status' && mode.id != 'running_status') return;
+        else{
+            set_status_avail('running_status', false);
+            changeStatusText('running_status', 'Disconnected');
+            set_status_mode(get_prev_status())
+            set_status_avail('cluster_status', false);
+            changeStatusText('cluster_status', 'Disconnected');
+            
+            console.log('TODO: kill terminals & app')
+        }
+    }
+
+    function cancel_login_terminal(){
+        const mode = get_status_mode();
+        if(mode.id != 'login_node_status') return;
+        else {
+            /* const status_el = document.getElementById('login_node_status')
+            const span = status_el.querySelector('.var');
+            span.innerHTML = 'Disconnected' */
+            set_status_avail('running_status', false);
+            changeStatusText('running_status', 'Disconnected');
+            set_status_avail('cluster_status', false);
+            changeStatusText('cluster_status', 'Disconnected');
+            set_status_mode(get_prev_status())
+            set_status_avail('login_node_status', false);
+            changeStatusText('login_node_status', 'Disconnected');
+            set_status_mode(null);
+
+            new_cluster();
+            console.log('TODO');
+        }
+    }
+
+    function toggle_terminal(terminal){
+        const map = {
+            'login': toggle_login_terminal,
+            'cluster': toggle_cluster_terminal,
+        };
+        map[terminal]();
+    }
+
+    
+    function toggle_cluster_terminal(){
+        const mode = get_status_mode().id;
+        if(mode != 'cluster_status' && mode != 'running_status') return;
+        const terminal = document.getElementById('cluster_terminal');
+        const visible = terminal.style.display == 'block';
+        terminal.style.display = visible ? 'none' : 'block';
+    }
+
+    function toggle_login_terminal(){
+        const mode = get_status_mode().id;
+        if(mode != 'login_node_status') return;
+        const terminal = document.getElementById('login_terminal');
+        const visible = terminal.style.display == 'block';
+        terminal.style.display = visible ? 'none' : 'block';
+    }
+
+    function _set_status_mode(setmode){
+        const terminal_visible = 
+            document.getElementById('login_terminal').style.display == 'block' || 
+            document.getElementById('cluster_terminal').style.display == 'block';
+        const modes = get_status_modes()
+        const terminals = ['login_terminal', 'cluster_terminal'];
+        const modeTerminalMap = {
+            [modes[0]]: [terminals[0]],
+            [modes[1]]: [terminals[1]],
+            [modes[2]]: [terminals[1]],
+        }
+
+        for(const mode of modes){
+            const el = document.getElementById(mode);
+            el.style.display = 'none';
+            document.getElementsByClassName(`.var_${mode}`)[0].style.color = 'black'
+        }
+        
+        for(const terminal of terminals){
+            const el = document.getElementById(terminal);
+            el.style.display = 'none';
+        }
+
+        if(setmode == null) {
+            document.getElementById('status_name').innerHTML = '';
+            document.getElementById('status').style.display = 'none';
+            new_cluster();
+            return;
+        }
+        document.getElementById('status').style.display = 'block';
+
+        const el = document.getElementById(setmode);
+        el.style.display = 'block';
+
+        if(terminal_visible){
+            for(terminal of modeTerminalMap[setmode]){
+                const el = document.getElementById(terminal);
+                el.style.display = 'block';
+            }
+        }
+
+        document.getElementsByClassName(`.var_${setmode}`)[0].style.color = 'green'
+        document.getElementById('status_name').innerHTML = setmode;
+        return el;
+    }
+
+
+    const [set_status_avail, set_status_mode, get_status_modes, get_status_mode, get_next_status, get_prev_status] = (()=>{
+        const statusOrder = ['login_node_status', 'cluster_status', 'running_status'];
+        const statusAvail = {
+            'login_node_status': false,
+            'cluster_status': false,
+            'running_status': false
+        };
+
+        statusOrder.forEach(v => document.getElementsByClassName(`.var_${v}`)[0].style.display = 'none');
+
+        const get_status_modes = () => statusOrder;
+        let status_mode = null;
+        
+        const set_status_avail = (mode, avail) => {
+            statusAvail[mode] = avail;
+            document.getElementsByClassName(`.var_${mode}`)[0].style.display = avail ? 'block' : 'none';
+        }
+
+        const set_status_mode = (mode) => {
+            if(statusAvail[mode] || mode === null){ 
+                return status_mode = _set_status_mode(mode);
+            }
+            return null;
+        }
+        const get_status_mode = () => status_mode;
+
+        const get_next_status = () => {
+            const curr = statusOrder.indexOf(status_mode.id);
+            for(let i = curr+1; i < curr+statusOrder.length; ++i){
+                const next = statusOrder[i%statusOrder.length];
+                if(statusAvail[next])   return next;
+            }
+            return null
+        };
+        const get_prev_status = () => {
+            const curr = statusOrder.indexOf(status_mode.id);
+            for(let i = curr-1; i > curr-statusOrder.length; --i){
+                const prev = statusOrder.at(i);
+                if(statusAvail[prev])   return prev;
+            }
+            return null
+        };
+        return [set_status_avail, set_status_mode, get_status_modes, get_status_mode, get_next_status, get_prev_status];
+    })();
+
     (function main(){
+        set_status_mode(null);
 
-        //arbitration server
-        socket.on('connect', () => {
-            clusterStatusElement.innerHTML = "connecting..."
+        socket_login.on('connect', () => {
+            const status_el = set_status_mode('login_node_status');
+            const span = status_el.querySelector('.var');
+            span.innerHTML = 'Connected'
         });  
-        socket.on('disconnect', () => {});
-
-
+        socket_login.on('disconnect', () => {
+            const status_el = set_status_mode('login_node_status');
+            const span = status_el.querySelector('.var');
+            span.innerHTML = 'Disconnected';
+        });
+        socket_cluster.on('connect', () => {
+            const status_el = set_status_mode('cluster_status');
+            const span = status_el.querySelector('.var');
+            span.innerHTML = 'Disconnected';
+        });
+        socket_cluster.on('disconnect', () => {
+            const status_el = set_status_mode('cluster_status');
+            const span = status_el.querySelector('.var');
+            span.innerHTML = 'Disconnected';
+        });
+        
         /* 
+
         //cluster status
-        socket.on('cluster_estimate', (data) => { clusterStatusElement.innerHTML = `connecting... Estimated wait time: ${data.output}`});
+        socket_login.on('cluster_estimate', (data) => {});
         //cluster events
-        socket.on('cluster_connected', (data) => {});
-        socket.on('cluster_disconnected', (data) => {});
+        socket_login.on('cluster_connected', (data) => {});
+        socket_login.on('cluster_disconnected', (data) => {});
         */
+        document.getElementsByTagName('body')[0].style.display = 'block';
     })();
 
     </script>
