@@ -41,8 +41,7 @@ class Server:
         template_dir = os.path.abspath('../templates')
         self.app = Flask(__name__, template_folder=template_dir)
         self.app.config['SECRET_KEY'] = 'secret'
-        self.socketio = SocketIO()
-        self.socketio.init_app(self.app)
+        self.socketio = SocketIO(self.app, cors_allowed_origins="*")
         self.substrate_pid = None
     
     def run(self, *args, **kwargs):

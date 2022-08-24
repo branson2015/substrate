@@ -11,14 +11,14 @@ LOCAL_REM_PORT=5002
 
 INTERMEDIATE_MACHINE="andes.olcf.ornl.gov"
 INTERMEDIATE_USER="jhammer"
-INTERMEDIATE_SUBSTRATE_DIR="~/ornl/substrate_server"
+INTERMEDIATE_SUBSTRATE_DIR="~/ornl/hpc/substrate_server"
 INTERMEDIATE_HOST="127.0.0.1"
 INTERMEDIATE_REM_PORT=8027
 INTERMEDIATE_APP_PORT=8028
 INTERMEDIATE_ARB_PORT=8029
 
 REMOTE_MACHINE="accona.eecs.utk.edu"
-REMOTE_SUBSTRATE_DIR="~/ornl/substrate/src/substrate/targets/hpc/substrate_server"
+REMOTE_SUBSTRATE_DIR="~/ornl/hpc/substrate_server"
 REMOTE_USER="jhammer3"
 REMOTE_HOST="127.0.0.1"
 REMOTE_ARB_PORT=8031
