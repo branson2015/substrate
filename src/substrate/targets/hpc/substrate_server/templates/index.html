@@ -90,12 +90,14 @@
             #sidebar {
                 position: relative;
                 float: right;
+                display: flex;
+                flex-flow: column;
                 width: 300px;
                 height: 100%;
             }
 
             #login_terminal, #cluster_terminal {
-                height: 100%;
+                flex: 1;
                 display: none;
             }
             
@@ -313,11 +315,10 @@
                             <span>Status</span>: <span class="var">Disconnected</span>
                         </div>
                         <div class="options">
-                            <button onclick="scale()" id="scale">Scale</button>
-                            <button onclick="restart()" id="restart">Restart</button>
-                            <button onclick="kill()" id="kill">ShutDown</button>
+                            <div onclick="scale()" id="scale">Scale</div>
+                            <div onclick="restart()" id="restart">Restart</div>
+                            <div onclick="kill()" id="kill">ShutDown</div>
                         </div>
-                        <div>Details</div>
                     </div>
                 </div>
                 
@@ -351,6 +352,42 @@
         6. style CSS better - debug/cluster_down page
         7. integrate into substrate
     */
+
+    function post(url, data){
+        return fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data),
+        });
+    }
+    function get(url){
+        return fetch(url);
+    }
+
+    function shutdown(){
+        console.log('TODO');
+        return;
+
+        get('/shutdown');
+    }
+
+    function restart(){
+        console.log('TODO');
+        return;
+
+        get('/restart');
+
+    }
+
+    function scale(){
+        console.log('TODO');
+        return;
+
+        const data = {
+            nodes: 1,
+        }
+        post('/scale', data);
+    }
     
     function new_cluster(){
         document.getElementById('new_allocation').style.display = 'block';
@@ -391,8 +428,14 @@
         return [ret, errs]
     }
     function new_allocation(e){
-        e.preventDefault();
-        const formData = Object.fromEntries(Array.from(e.target.elements).map(el => [el.name, el.value]))
+        let formData = null;
+        if(e instanceof Event){
+            e.preventDefault();
+            formData = Object.fromEntries(Array.from(e.target.elements).map(el => [el.name, el.value]));
+        } else {
+            formData = e;
+        }
+
         let [valid, errs] = validate(formData);
         //delete me
         valid = true;
@@ -405,10 +448,10 @@
         const startup = document.getElementById('startup');
         startup.style.display = modal.style.display = 'none';
         
-        set_status_avail('running_status', false);
+        set_status_avail('running_status', true);
         set_status_avail('login_node_status', true);
         set_status_avail('cluster_status', true);
-        const status_el = set_status_mode('cluster_status');
+        const status_el = set_status_mode('login_node_status');
         const span = status_el.querySelector('.var');
         span.innerHTML = 'Connecting...'
 
@@ -500,10 +543,10 @@
         const mode = get_status_mode();
         if(mode.id != 'cluster_status' && mode.id != 'running_status') return;
         else{
-            set_status_avail('running_status', false);
+            //set_status_avail('running_status', false);
             changeStatusText('running_status', 'Disconnected');
-            set_status_mode(get_prev_status())
-            set_status_avail('cluster_status', false);
+            //set_status_mode(get_prev_status())
+            //set_status_avail('cluster_status', false);
             changeStatusText('cluster_status', 'Disconnected');
             
             console.log('TODO: kill terminals & app')
@@ -517,12 +560,12 @@
             /* const status_el = document.getElementById('login_node_status')
             const span = status_el.querySelector('.var');
             span.innerHTML = 'Disconnected' */
-            set_status_avail('running_status', false);
+            //set_status_avail('running_status', false);
             changeStatusText('running_status', 'Disconnected');
-            set_status_avail('cluster_status', false);
+            //set_status_avail('cluster_status', false);
             changeStatusText('cluster_status', 'Disconnected');
-            set_status_mode(get_prev_status())
-            set_status_avail('login_node_status', false);
+            //set_status_mode(get_prev_status())
+            //set_status_avail('login_node_status', false);
             changeStatusText('login_node_status', 'Disconnected');
             set_status_mode(null);
 
@@ -557,10 +600,14 @@
     }
 
     function _set_status_mode(setmode){
-        const terminal_visible = 
+        const terminal_status_modes = ['login_node_status', 'cluster_status'];
+        
+        const terminal_visible = terminal_status_modes.includes(setmode) && (
             document.getElementById('login_terminal').style.display == 'block' || 
-            document.getElementById('cluster_terminal').style.display == 'block';
-        const modes = get_status_modes()
+            document.getElementById('cluster_terminal').style.display == 'block'
+        );
+        const modes = get_status_modes();
+        
         const terminals = ['login_terminal', 'cluster_terminal'];
         const modeTerminalMap = {
             [modes[0]]: [terminals[0]],
@@ -648,8 +695,17 @@
         return [set_status_avail, set_status_mode, get_status_modes, get_status_mode, get_next_status, get_prev_status];
     })();
 
+
+
+
+    const config = null;
     (function main(){
-        set_status_mode(null);
+        if(config === null){
+            set_status_mode(null);
+        } else {
+            new_allocation(config);
+            set_status_mode('login_node_status');
+        }
 
         socket_login.on('connect', () => {
             const status_el = set_status_mode('login_node_status');
