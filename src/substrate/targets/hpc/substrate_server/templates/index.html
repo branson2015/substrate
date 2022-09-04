@@ -3,7 +3,7 @@
         <title>Substrate HPC</title>
         <style>
             :root {
-                --gradient_1: linear-gradient(rgb(194, 255, 169), rgb(87, 255, 65));
+                --gradient_1: linear-gradient(rgb(157, 255, 118), rgb(48, 255, 21));
             }
 
             * {
@@ -227,6 +227,31 @@
                 height: 40px;
             }
 
+            .loader {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                border: 16px solid #f3f3f3;
+                border-radius: 50%;
+                border-top: 16px solid #3498db;
+                width: 120px;
+                height: 120px;
+                -webkit-animation: spin 2s linear infinite; /* Safari */
+                animation: spin 2s linear infinite;
+            }
+
+            /* Safari */
+            @-webkit-keyframes spin {
+                0% { -webkit-transform: rotate(0deg); }
+                100% { -webkit-transform: rotate(360deg); }
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
             
         </style>
         <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
@@ -274,8 +299,9 @@
 
         </div>
         <div id="overlay">
-            <div id="sidebar">
+            <div class="loader" id="loader"></div>
 
+            <div id="sidebar">
                 <div id="status">
                     <div id="status_page">
                         <div id="change_status_left" onclick="cycle_status_left()"><</div>
@@ -295,7 +321,7 @@
                             <span>Status</span>: <span class="var">Disconnected</span>
                         </div>
                         <div class="options">
-                            <div onclick="cancel_terminal('login')">Cancel</div>
+                            <div onclick="cancel_cluster()">Cancel</div>
                             <div onclick="toggle_terminal('login')">Details</div>
                         </div>
                     </div>
@@ -305,7 +331,7 @@
                             <span>Status</span>: <span class="var">Disconnected</span>
                         </div>
                         <div class="options">
-                            <div onclick="cancel_terminal('cluster')">Cancel</div>
+                            <div onclick="cancel_cluster()">Cancel</div>
                             <div onclick="toggle_terminal('cluster')">Details</div>
                         </div>
                     </div>
@@ -315,9 +341,10 @@
                             <span>Status</span>: <span class="var">Disconnected</span>
                         </div>
                         <div class="options">
+                            <div onclick="cancel_cluster()">Cancel</div>
                             <div onclick="scale()" id="scale">Scale</div>
                             <div onclick="restart()" id="restart">Restart</div>
-                            <div onclick="kill()" id="kill">ShutDown</div>
+                            <div onclick="kill()" id="kill">Shutdown</div>
                         </div>
                     </div>
                 </div>
@@ -393,6 +420,7 @@
         document.getElementById('new_allocation').style.display = 'block';
         document.getElementById('allocation_options_modal').style.display = 'none';
         document.getElementById('startup').style.display = 'block';
+        document.getElementById('loader').style.display = 'none';
     }
     function new_cluster_options(){
         const button = document.getElementById('new_allocation');
@@ -436,14 +464,18 @@
             formData = e;
         }
 
-        let [valid, errs] = validate(formData);
-        //delete me
-        valid = true;
-        if(!valid) {
-            console.log(errs)
-            return false;
+        if(formData){
+            let [valid, errs] = validate(formData);
+            //delete me
+            valid = true;
+            if(!valid) {
+                console.log(errs)
+                return false;
+            }
+            
+            fetch('/new_cluster', formData);
         }
-        //fetch('/new_cluster', formData);
+
         const modal = document.getElementById('allocation_options_modal');
         const startup = document.getElementById('startup');
         startup.style.display = modal.style.display = 'none';
@@ -454,10 +486,8 @@
         const status_el = set_status_mode('login_node_status');
         const span = status_el.querySelector('.var');
         span.innerHTML = 'Connecting...'
-
-        
-
-
+        document.getElementById('loader').style.display = 'block';
+    
         return false;
     }
 
@@ -497,16 +527,6 @@
         iframe.src = 'cluster_down.html'
     }
 
-    function cancel_terminal(terminal){
-        const map = {
-            'login': cancel_login_terminal,
-            'cluster': cancel_cluster_terminal,
-        };
-        map[terminal]();
-    }
-
-
-
     function cycle_status_left(){
         const prev = get_prev_status();
         if(prev){
@@ -520,58 +540,20 @@
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     function changeStatusText(status, text){
         const status_el = document.getElementById('status')
         const span = status_el.querySelector('.var');
         span.innerHTML = text;
     }
 
-    function cancel_cluster_terminal(){
-        const mode = get_status_mode();
-        if(mode.id != 'cluster_status' && mode.id != 'running_status') return;
-        else{
-            //set_status_avail('running_status', false);
-            changeStatusText('running_status', 'Disconnected');
-            //set_status_mode(get_prev_status())
-            //set_status_avail('cluster_status', false);
-            changeStatusText('cluster_status', 'Disconnected');
-            
-            console.log('TODO: kill terminals & app')
-        }
-    }
+    function cancel_cluster(){
+        changeStatusText('running_status', 'Disconnected');
+        changeStatusText('cluster_status', 'Disconnected');
+        changeStatusText('login_node_status', 'Disconnected');
+        set_status_mode(null);
 
-    function cancel_login_terminal(){
-        const mode = get_status_mode();
-        if(mode.id != 'login_node_status') return;
-        else {
-            /* const status_el = document.getElementById('login_node_status')
-            const span = status_el.querySelector('.var');
-            span.innerHTML = 'Disconnected' */
-            //set_status_avail('running_status', false);
-            changeStatusText('running_status', 'Disconnected');
-            //set_status_avail('cluster_status', false);
-            changeStatusText('cluster_status', 'Disconnected');
-            //set_status_mode(get_prev_status())
-            //set_status_avail('login_node_status', false);
-            changeStatusText('login_node_status', 'Disconnected');
-            set_status_mode(null);
-
-            new_cluster();
-            console.log('TODO');
-        }
+        new_cluster();
+        console.log('TODO');
     }
 
     function toggle_terminal(terminal){
@@ -698,12 +680,12 @@
 
 
 
-    const config = null;
+    const config = {};
     (function main(){
         if(config === null){
             set_status_mode(null);
         } else {
-            new_allocation(config);
+            new_allocation(null);
             set_status_mode('login_node_status');
         }
 
@@ -721,11 +703,13 @@
             const status_el = set_status_mode('cluster_status');
             const span = status_el.querySelector('.var');
             span.innerHTML = 'Disconnected';
+            document.getElementById('loader').style.display = 'none';
         });
         socket_cluster.on('disconnect', () => {
             const status_el = set_status_mode('cluster_status');
             const span = status_el.querySelector('.var');
             span.innerHTML = 'Disconnected';
+            document.getElementById('loader').style.display = 'block';
         });
         
         /* 
