@@ -227,6 +227,21 @@
                 height: 40px;
             }
 
+
+            #estimate {
+                position: absolute;
+                transform: translate(-50%, 0%);
+                top: 0;
+                left: 50%;
+                background: rgba(0,0,0,0.25);
+                border: 1px solid black;
+                border-radius: 0px 0px 5px 5px;
+                border-top: none;
+                width: 100px;
+                height: 20px;
+                text-align: center;
+            }
+
             .loader {
                 position: absolute;
                 top: 50%;
@@ -299,6 +314,7 @@
 
         </div>
         <div id="overlay">
+            <div id="estimate">00:00:00</div>
             <div class="loader" id="loader"></div>
 
             <div id="sidebar">
@@ -365,7 +381,11 @@
     </body>
     
     <!-- socketio -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script 
+        src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" 
+        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+        crossorigin="anonymous">
+    </script>
     
     <!-- user script -->
     <script type="text/javascript" charset="utf-8">
@@ -712,10 +732,19 @@
             document.getElementById('loader').style.display = 'block';
         });
         
+        
+        socket_login.on('cluster_estimate', function estimate(data) {
+            if(data.estimate == '00:00:00'){
+                document.getElementById('estimate').style.top = '-20px';
+                socket_login.off('cluster_estimate', estimate);
+            }
+            document.getElementById('estimate').innerHTML = data.estimate;
+        });
+        
         /* 
 
         //cluster status
-        socket_login.on('cluster_estimate', (data) => {});
+        
         //cluster events
         socket_login.on('cluster_connected', (data) => {});
         socket_login.on('cluster_disconnected', (data) => {});
